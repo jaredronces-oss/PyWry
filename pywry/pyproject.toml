@@ -135,5 +135,22 @@ warn_unused_configs = true
 exclude = ["tests/"]
 
 [[tool.mypy.overrides]]
-module = ["plotly.*", "anywidget", "anywidget.*", "ipywidgets", "ipywidgets.*", "pyinstaller", "pyinstaller.*"]
+module = [
+    "plotly.*",
+    "anywidget", "anywidget.*",
+    "ipywidgets", "ipywidgets.*",
+    "pyinstaller", "pyinstaller.*",
+    "mcp.*",
+    "traitlets", "traitlets.*",
+    "IPython", "IPython.*",
+    "openai", "openai.*",
+    "anthropic", "anthropic.*",
+    "magentic", "magentic.*",
+    "keyring", "keyring.*",
+    "fastmcp", "fastmcp.*",
+]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pywry.mcp.server"
+disallow_untyped_decorators = false

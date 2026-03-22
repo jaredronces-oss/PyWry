@@ -44,10 +44,7 @@ from pywry.templates import build_plotly_init_script
 # Gemini configuration
 # ---------------------------------------------------------------------------
 
-GEMINI_API_KEY = os.environ.get(
-    "GEMINI_API_KEY",
-    ""
-)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 gemini_model = OpenaiChatModel(
     "gemini-2.5-flash",
