@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 
 if TYPE_CHECKING:
@@ -137,7 +137,7 @@ class OpenAIProvider(ChatProvider):
 
     def _build_messages(
         self, messages: list[ChatMessage], config: ChatConfig
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         """Convert PyWry chat messages into OpenAI chat payloads.
 
         Parameters
@@ -150,10 +150,10 @@ class OpenAIProvider(ChatProvider):
 
         Returns
         -------
-        list[dict[str, str]]
+        list[dict[str, Any]]
             OpenAI-compatible chat message dictionaries.
         """
-        result: list[dict[str, str]] = []
+        result: list[dict[str, Any]] = []
         if config.system_prompt:
             result.append({"role": "system", "content": config.system_prompt})
         result.extend({"role": m.role, "content": m.text_content()} for m in messages)
@@ -186,9 +186,9 @@ class OpenAIProvider(ChatProvider):
         """
         from .chat import ChatMessage as ChatMsg
 
-        resp = await self._client.chat.completions.create(
+        resp: Any = await self._client.chat.completions.create(
             model=config.model,
-            messages=self._build_messages(messages, config),
+            messages=cast(Any, self._build_messages(messages, config)),
             temperature=config.temperature,
             max_tokens=config.max_tokens,
             stream=False,
@@ -238,23 +238,23 @@ class OpenAIProvider(ChatProvider):
         """
         from .chat import GenerationCancelledError
 
-        resp = await self._client.chat.completions.create(
+        stream_resp: Any = await self._client.chat.completions.create(
             model=config.model,
-            messages=self._build_messages(messages, config),
+            messages=cast(Any, self._build_messages(messages, config)),
             temperature=config.temperature,
             max_tokens=config.max_tokens,
             stream=True,
         )
 
         try:
-            async for chunk in resp:
+            async for chunk in stream_resp:
                 if cancel_event and cancel_event.is_set():
                     raise GenerationCancelledError("Generation cancelled by user")
                 delta = chunk.choices[0].delta if chunk.choices else None
                 if delta and delta.content:
                     yield delta.content
         finally:
-            await resp.response.aclose()
+            await stream_resp.response.aclose()
 
 
 class AnthropicProvider(ChatProvider):
@@ -296,7 +296,7 @@ class AnthropicProvider(ChatProvider):
     def _build_messages(
         self,
         messages: list[ChatMessage],
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         """Convert PyWry chat messages into Anthropic message payloads.
 
         Parameters
@@ -306,7 +306,7 @@ class AnthropicProvider(ChatProvider):
 
         Returns
         -------
-        list[dict[str, str]]
+        list[dict[str, Any]]
             Anthropic-compatible message dictionaries.
         """
         return [{"role": m.role, "content": m.text_content()} for m in messages]
@@ -339,15 +339,15 @@ class AnthropicProvider(ChatProvider):
         """
         from .chat import ChatMessage as ChatMsg
 
-        resp = await self._client.messages.create(
+        resp: Any = await self._client.messages.create(
             model=config.model,
-            messages=self._build_messages(messages),
+            messages=cast(Any, self._build_messages(messages)),
             system=config.system_prompt or "",
             temperature=config.temperature,
             max_tokens=config.max_tokens,
             stream=False,
         )
-        text = resp.content[0].text if resp.content else ""
+        text = resp.content[0].text if resp.content and hasattr(resp.content[0], "text") else ""
         return ChatMsg(
             role="assistant",
             content=text,
@@ -395,7 +395,7 @@ class AnthropicProvider(ChatProvider):
 
         async with self._client.messages.stream(
             model=config.model,
-            messages=self._build_messages(messages),
+            messages=cast(Any, self._build_messages(messages)),
             system=config.system_prompt or "",
             temperature=config.temperature,
             max_tokens=config.max_tokens,

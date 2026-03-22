@@ -498,7 +498,7 @@ async def scaffold_app(ctx: Context) -> str:
     title_result = await ctx.elicit("What is the title of your app?", response_type=None)
     if title_result.action != "accept":
         return json.dumps({"status": "cancelled", "reason": "No title provided"})
-    title: str = title_result.data
+    title = str(title_result.data)
 
     # Step 2 — description
     desc_result = await ctx.elicit(
@@ -507,30 +507,33 @@ async def scaffold_app(ctx: Context) -> str:
     )
     if desc_result.action != "accept":
         return json.dumps({"status": "cancelled", "reason": "No description provided"})
-    description: str = desc_result.data
+    description = str(desc_result.data)
 
     # Step 3 — display mode
     mode_result = await ctx.elicit(
         "How will the app be displayed? (native window / inline)",
         response_type=None,
     )
-    display_mode = mode_result.data if mode_result.action == "accept" else "native window"
+    display_mode = str(mode_result.data) if mode_result.action == "accept" else "native window"
 
     # Step 4 — libraries
     lib_result = await ctx.elicit(
         "Which optional JavaScript libraries do you need? (Plotly, AG-Grid, or Neither)",
         response_type=None,
     )
-    selected_libs: list[str] = lib_result.data if lib_result.action == "accept" else ["Neither"]
-    include_plotly = "Plotly (charts)" in (selected_libs or [])
-    include_aggrid = "AG-Grid (tables)" in (selected_libs or [])
+    raw_libs: Any = lib_result.data if lib_result.action == "accept" else ["Neither"]
+    selected_libs: list[str] = (
+        list(raw_libs) if isinstance(raw_libs, (list, tuple)) else [str(raw_libs)]
+    )
+    include_plotly = "Plotly (charts)" in selected_libs
+    include_aggrid = "AG-Grid (tables)" in selected_libs
 
     # Step 5 — toolbar preference
     toolbar_result = await ctx.elicit(
         "Where should the main toolbar be placed? (top / left / bottom / right / none)",
         response_type=None,
     )
-    toolbar_pos = toolbar_result.data if toolbar_result.action == "accept" else "top"
+    toolbar_pos = str(toolbar_result.data) if toolbar_result.action == "accept" else "top"
 
     # Build an enriched description for planning
     enriched = (
