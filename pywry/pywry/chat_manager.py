@@ -1007,18 +1007,8 @@ class ChatManager:
         }
 
     def bind(self, widget: Any) -> None:
-        """Bind to a widget after ``app.show()``.
-
-        Must be called before ``app.block()``.  Pushes initial state
-        (welcome message, slash commands, context sources) immediately
-        so the frontend doesn't miss the ``chat:request-state`` event
-        that may have fired before the widget was bound.
-        """
+        """Bind to a widget after ``app.show()``."""
         self._widget = widget
-        # Push initial state now that we can emit.  The JS may have already
-        # sent ``chat:request-state`` while ``_widget`` was still None,
-        # causing ``_emit`` to silently drop the response.
-        self._on_request_state({}, "chat:request-state", "")
 
     def toolbar(
         self,
