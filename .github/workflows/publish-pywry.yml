@@ -458,46 +458,12 @@ jobs:
           retention-days: 30
 
   # =============================================================================
-  # Step 4: Publish to TestPyPI (workflow_dispatch only)
+  # Step 4: Test built wheels on all platforms
   # =============================================================================
-  publish-testpypi:
-    name: Publish to TestPyPI
+  test-wheels:
+    name: Test wheel - ${{ matrix.os }}
     needs: [merge-artifacts]
     if: always() && needs.merge-artifacts.result == 'success' && github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: .
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/pywry
-    permissions:
-      id-token: write
-
-    steps:
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Display dist contents
-        run: ls -la dist/
-
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          print-hash: true
-          skip-existing: true
-
-  # =============================================================================
-  # Step 5: Test package from TestPyPI on all platforms
-  # =============================================================================
-  test-testpypi:
-    name: Test from TestPyPI - ${{ matrix.os }}
-    needs: [merge-artifacts, publish-testpypi]
-    if: always() && needs.publish-testpypi.result == 'success' && github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -578,23 +544,44 @@ jobs:
             echo "OPENSSL_DIR=$opensslDir" >> $env:GITHUB_ENV
           }
 
-      - name: Wait for TestPyPI propagation
-        run: sleep 60
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
-      - name: Install from TestPyPI
+      - name: Install from built wheel with dev dependencies
         shell: bash
         run: |
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pywry==${{ needs.merge-artifacts.outputs.version }}
+          pip install --find-links dist/ "pywry[dev]==${{ needs.merge-artifacts.outputs.version }}"
 
       - name: Verify installation
         shell: bash
         run: |
-          python -c "import pywry; print(f'✅ pywry {pywry.__version__} installed successfully')"
-          python -c "from pywry import PyWry; print('✅ PyWry class imported')"
-          python -c "from pywry.toolbar import Button, Toolbar; print('✅ Toolbar components imported')"
+          python -c "import pywry; print(f'pywry {pywry.__version__} installed successfully')"
+          python -c "from pywry import PyWry; print('PyWry class imported')"
+          python -c "from pywry.toolbar import Button, Toolbar; print('Toolbar components imported')"
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        working-directory: pywry
+        env:
+          PYWRY_HEADLESS: "1"
+          NO_AT_BRIDGE: "1"
+        run: |
+          dbus-run-session -- xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -m pytest -c pytest.ini tests/ -v --tb=short -x
+
+      - name: Run tests (Windows/macOS)
+        if: runner.os != 'Linux'
+        working-directory: pywry
+        env:
+          PYWRY_HEADLESS: "1"
+          PYWRY_DEPLOY__STATE_BACKEND: "memory"
+        run: |
+          python -m pytest -c pytest.ini tests/ -v --tb=short -x --ignore=tests/test_state_redis_integration.py --ignore=tests/test_auth_rbac_integration.py --ignore=tests/test_deploy_mode_integration.py --ignore=tests/test_e2e_deploy_mode.py --ignore=tests/test_e2e_rbac_widgets.py -m "not redis and not container"
 
   # =============================================================================
-  # Step 6: Create draft release with all artifacts (workflow_dispatch only)
+  # Step 5: Create draft release with all artifacts (workflow_dispatch only)
   # =============================================================================
   create-release:
     name: Create Draft Release
@@ -659,7 +646,7 @@ jobs:
             *This is a draft release. Review and publish to trigger PyPI upload.*
 
   # =============================================================================
-  # Step 7: Publish to PyPI (on release publish) - Trusted Publisher
+  # Step 6: Publish to PyPI (on release publish) - Trusted Publisher
   # =============================================================================
   publish-pypi:
     name: Publish to PyPI
@@ -668,9 +655,6 @@ jobs:
     defaults:
       run:
         working-directory: .
-    environment:
-      name: pypi
-      url: https://pypi.org/p/pywry
     permissions:
       id-token: write
 

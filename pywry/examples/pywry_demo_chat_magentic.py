@@ -330,14 +330,14 @@ chat = ChatManager(
         "I can see the sales dashboard next to me. Type **@** to attach \n"
         "the **Sales Data** grid or **Revenue Chart** \u2014 I'll read the \n"
         "live data from the component and analyze it.\n\n"
-        "You can also **drag-and-drop files** (CSV, JSON, PDF, XLSX, etc.) "
+        "You can also **drag-and-drop files** (CSV, JSON, TXT, MD) "
         "into this chat for analysis."
     ),
     toolbar_width="420px",
     toolbar_min_width="320px",
     enable_context=True,
     enable_file_attach=True,
-    file_accept_types=[".csv", ".json", ".txt", ".md", ".xlsx", ".pdf"],
+    file_accept_types=[".csv", ".json", ".txt", ".md"],
     include_plotly=True,
     include_aggrid=True,
 )
@@ -356,6 +356,8 @@ content = HtmlContent(html=dashboard_html, inline_css=DASHBOARD_CSS)
 
 widget = app.show(
     content,
+    width=1600,
+    height=900,
     include_plotly=True,
     include_aggrid=True,
     toolbars=[chat.toolbar()],
