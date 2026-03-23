@@ -147,12 +147,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-linux-x86_64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload sdist
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sdist
           path: pywry/dist/*.tar.gz
@@ -211,12 +211,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-linux-aarch64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -259,12 +259,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-macos-x86_64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -307,12 +307,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-macos-arm64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -355,12 +355,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-windows-amd64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -403,12 +403,12 @@ jobs:
         run: ls -la dist/
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'pywry/dist/*'
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-windows-arm64-py${{ matrix.python-version }}
           path: pywry/dist/*.whl
@@ -433,14 +433,14 @@ jobs:
 
     steps:
       - name: Download all wheel artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: wheels-*
           merge-multiple: true
           path: dist/
 
       - name: Download sdist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: sdist
           path: dist/
@@ -451,7 +451,7 @@ jobs:
           ls -la dist/
 
       - name: Upload merged dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dist
           path: dist/
@@ -492,14 +492,62 @@ jobs:
         if: runner.os == 'Linux'
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Set up Rust (Windows ARM64)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           for i in 1 2 3; do sudo apt-get update && break || sleep 15; done
           for i in 1 2 3; do sudo apt-get install -y --fix-missing xvfb dbus-x11 at-spi2-core libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 libxcb-shape0 libgl1 libegl1 libwebkit2gtk-4.1-dev libgtk-3-dev && break || { sleep 30; sudo apt-get update; }; done
 
+      - name: Cache vcpkg packages (Windows ARM)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        uses: actions/cache@v5
+        with:
+          path: C:/vcpkg/installed
+          key: vcpkg-arm64-windows-openssl-static-md-lua-${{ hashFiles('.github/workflows/publish-pywry.yml') }}
+          restore-keys: |
+            vcpkg-arm64-windows-openssl-static-md-lua-
+
+      - name: Install OpenSSL via vcpkg (Windows ARM)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        run: |
+          $env:VCPKG_ROOT = "$env:VCPKG_INSTALLATION_ROOT"
+          & "$env:VCPKG_ROOT\vcpkg" install openssl:arm64-windows-static-md
+          $opensslDir = "$env:VCPKG_ROOT\installed\arm64-windows-static-md"
+          echo "OPENSSL_DIR=$opensslDir" >> $env:GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=$opensslDir\lib" >> $env:GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=$opensslDir\include" >> $env:GITHUB_ENV
+
+      - name: Setup build environment (Windows ARM)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        run: |
+          $buildTemp = "C:\buildtmp"
+          New-Item -ItemType Directory -Force -Path $buildTemp | Out-Null
+          echo "TMP=$buildTemp" >> $env:GITHUB_ENV
+          echo "TEMP=$buildTemp" >> $env:GITHUB_ENV
+          $env:VCPKG_ROOT = "$env:VCPKG_INSTALLATION_ROOT"
+          & "$env:VCPKG_ROOT\vcpkg" install lua:arm64-windows
+          $luaDir = "$env:VCPKG_ROOT\installed\arm64-windows"
+          echo "LUA_DIR=$luaDir" >> $env:GITHUB_ENV
+          echo "LUA_LIB=$luaDir\lib" >> $env:GITHUB_ENV
+          echo "LUA_INC=$luaDir\include" >> $env:GITHUB_ENV
+
+      - name: Build cryptography from source (Windows ARM)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        run: |
+          pip install --no-cache-dir --no-binary=cryptography cryptography
+          python -c "from cryptography.hazmat.bindings._rust import openssl; print('cryptography OK')"
+
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: dist
           path: dist/
@@ -507,9 +555,13 @@ jobs:
       - name: Install from built wheel
         shell: bash
         run: |
-          WHEEL=$(ls $GITHUB_WORKSPACE/dist/pywry-*.whl | head -1)
-          echo "Installing: $WHEEL"
-          pip install "${WHEEL}[dev]"
+          pip install --find-links "$GITHUB_WORKSPACE/dist/" pywry==${{ needs.merge-artifacts.outputs.version }}
+          pip install pytest pytest-asyncio pytest-timeout httpx
+
+      - name: Install cryptography (non-Windows-ARM)
+        if: "!(runner.os == 'Windows' && runner.arch == 'ARM64')"
+        shell: bash
+        run: pip install cryptography
 
       - name: Verify installation
         shell: bash
@@ -527,14 +579,42 @@ jobs:
         run: |
           dbus-run-session -- xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python -m pytest -c pytest.ini tests/ -v --tb=short -x
 
-      - name: Run tests (Windows/macOS)
-        if: runner.os != 'Linux'
+      - name: Run tests (Windows x64)
+        if: runner.os == 'Windows' && runner.arch == 'X64'
+        working-directory: pywry
+        env:
+          PYWRY_HEADLESS: "1"
+          PYWRY_DEPLOY__STATE_BACKEND: "memory"
+          PYTHONUTF8: "1"
+        run: |
+          python -m pytest -c pytest.ini tests/ -v --tb=short -x --ignore=tests/test_state_redis_integration.py --ignore=tests/test_auth_rbac_integration.py --ignore=tests/test_deploy_mode_integration.py --ignore=tests/test_e2e_deploy_mode.py --ignore=tests/test_e2e_rbac_widgets.py -m "not redis and not container"
+
+      - name: Run tests (Windows ARM)
+        if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        working-directory: pywry
+        env:
+          PYWRY_HEADLESS: "1"
+          PYWRY_DEPLOY__STATE_BACKEND: "memory"
+          PYTHONUTF8: "1"
+        run: |
+          python -m pytest -c pytest.ini tests/ -v --tb=short -x --ignore=tests/test_state_redis_integration.py --ignore=tests/test_auth_rbac_integration.py --ignore=tests/test_deploy_mode_integration.py --ignore=tests/test_e2e_deploy_mode.py --ignore=tests/test_e2e_rbac_widgets.py --ignore=tests/test_inline_ssl.py -m "not redis and not container"
+
+      - name: Run tests (macOS ARM)
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
         working-directory: pywry
         env:
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
         run: |
           python -m pytest -c pytest.ini tests/ -v --tb=short -x --ignore=tests/test_state_redis_integration.py --ignore=tests/test_auth_rbac_integration.py --ignore=tests/test_deploy_mode_integration.py --ignore=tests/test_e2e_deploy_mode.py --ignore=tests/test_e2e_rbac_widgets.py -m "not redis and not container"
+
+      - name: Run tests (macOS Intel)
+        if: runner.os == 'macOS' && runner.arch == 'X64'
+        working-directory: pywry
+        env:
+          PYWRY_HEADLESS: "1"
+        run: |
+          python -m pytest -c pytest.ini tests/ -v --tb=short -x
 
   # =============================================================================
   # Step 5: Create draft release with all artifacts (workflow_dispatch only)
@@ -552,7 +632,7 @@ jobs:
 
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: dist
           path: dist/
