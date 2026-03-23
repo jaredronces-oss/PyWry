@@ -223,11 +223,12 @@ def get_resources() -> list[Resource]:
         All available MCP resources.
     """
     from mcp.types import Resource
+    from pydantic import AnyUrl
 
     # Component documentation resources
     resources = [
         Resource(
-            uri=f"pywry://component/{comp_name}",  # type: ignore[arg-type]
+            uri=AnyUrl(f"pywry://component/{comp_name}"),
             name=f"Component: {comp_doc['name']}",
             description=comp_doc["description"],
             mimeType="text/markdown",
@@ -239,19 +240,19 @@ def get_resources() -> list[Resource]:
     resources.extend(
         [
             Resource(
-                uri="pywry://docs/events",  # type: ignore[arg-type]
+                uri=AnyUrl("pywry://docs/events"),
                 name="Built-in Events Reference",
                 description="Documentation for all built-in PyWry events",
                 mimeType="text/markdown",
             ),
             Resource(
-                uri="pywry://source/components",  # type: ignore[arg-type]
+                uri=AnyUrl("pywry://source/components"),
                 name="Component Source Code",
                 description="Source code for all PyWry toolbar components",
                 mimeType="text/x-python",
             ),
             Resource(
-                uri="pywry://docs/quickstart",  # type: ignore[arg-type]
+                uri=AnyUrl("pywry://docs/quickstart"),
                 name="Quick Start Guide",
                 description="Getting started with PyWry widgets",
                 mimeType="text/markdown",
@@ -263,7 +264,7 @@ def get_resources() -> list[Resource]:
     resources.extend(
         [
             Resource(
-                uri=f"pywry://export/{widget_id}",  # type: ignore[arg-type]
+                uri=AnyUrl(f"pywry://export/{widget_id}"),
                 name=f"Export: {widget_id}",
                 description=f"Python code to recreate widget {widget_id}",
                 mimeType="text/x-python",
