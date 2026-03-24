@@ -678,7 +678,5 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          print-hash: true
-          attestations: false
           verbose: true
 
