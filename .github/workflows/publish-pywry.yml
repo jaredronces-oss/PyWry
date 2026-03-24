@@ -553,7 +553,7 @@ jobs:
           python -c "from cryptography.hazmat.bindings._rust import openssl; print('cryptography OK')"
 
       - name: Download dist artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8.0.1
         with:
           name: dist
           path: ${{ runner.temp }}/dist/
@@ -707,10 +707,13 @@ jobs:
 
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8.0.1
         with:
           name: dist
           path: dist/
+
+      - name: Remove attestation files
+        run: rm -f dist/*.publish.attestation
 
       - name: List distribution files
         run: |
