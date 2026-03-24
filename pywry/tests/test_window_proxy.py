@@ -384,6 +384,7 @@ class TestWindowProxyWebview:
         assert result["data"] == "Modified"
         app.close()
 
+    @retry_on_subprocess_failure(max_attempts=3, delay=1.0)
     def test_navigate(self) -> None:
         """navigate changes the window URL."""
         app = PyWry(theme=ThemeMode.DARK)

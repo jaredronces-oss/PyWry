@@ -22,17 +22,19 @@ from typing import Any, TypeVar
 import pytest
 
 import pywry
+
 from pywry import runtime
 from pywry.app import PyWry
 from pywry.config import AVAILABLE_TAURI_PLUGINS, TAURI_PLUGIN_REGISTRY
 from pywry.models import ThemeMode, WindowMode
+
 
 # Resolve package directory via the installed module so paths work even
 # when tests are copied to a temp directory for wheel validation CI.
 PYWRY_PKG_DIR = Path(pywry.__file__).parent
 
 # Import shared test utilities from tests.conftest
-from tests.conftest import ReadyWaiter, show_and_wait_ready, wait_for_result
+from tests.conftest import ReadyWaiter, show_and_wait_ready, wait_for_result  # noqa: E402
 
 
 F = TypeVar("F", bound=Callable[..., Any])

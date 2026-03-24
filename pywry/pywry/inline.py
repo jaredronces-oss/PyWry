@@ -1661,7 +1661,7 @@ def _make_server_request(
     **kwargs: Any,
 ) -> Any:
     """Make an internal request to the PyWry server with authentication."""
-    import requests
+    import httpx
 
     settings = get_settings().server
     target_host = host or settings.host
@@ -1682,7 +1682,7 @@ def _make_server_request(
     if _state.internal_api_token:
         headers[settings.internal_api_header] = _state.internal_api_token
 
-    return requests.request(
+    return httpx.request(
         method=method,
         url=url,
         json=json_data,

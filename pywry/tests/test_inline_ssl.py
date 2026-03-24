@@ -12,8 +12,8 @@ from ipaddress import ip_address
 from unittest.mock import MagicMock, patch
 
 import anyio
+import httpx
 import pytest
-import requests
 import websockets
 
 from cryptography import x509
@@ -359,7 +359,7 @@ def test_content_generation_https(ssl_certs):
         )
 
         try:
-            resp = requests.get(widget.url, verify=cert_path, timeout=5.0)
+            resp = httpx.get(widget.url, verify=cert_path, timeout=5.0)
             assert resp.status_code == 200
             content = resp.text
             assert "h1>Content Test</h1>" in content
@@ -443,7 +443,7 @@ def test_secret_never_in_https_response(ssl_certs):
 
         try:
             # Fetch via HTTPS
-            resp = requests.get(widget.url, verify=cert_path, timeout=5.0)
+            resp = httpx.get(widget.url, verify=cert_path, timeout=5.0)
             assert resp.status_code == 200
 
             # Secret must NOT appear in response

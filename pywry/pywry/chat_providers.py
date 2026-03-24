@@ -188,7 +188,7 @@ class OpenAIProvider(ChatProvider):
 
         resp: Any = await self._client.chat.completions.create(
             model=config.model,
-            messages=cast(Any, self._build_messages(messages, config)),
+            messages=cast("Any", self._build_messages(messages, config)),
             temperature=config.temperature,
             max_tokens=config.max_tokens,
             stream=False,
@@ -240,7 +240,7 @@ class OpenAIProvider(ChatProvider):
 
         stream_resp: Any = await self._client.chat.completions.create(
             model=config.model,
-            messages=cast(Any, self._build_messages(messages, config)),
+            messages=cast("Any", self._build_messages(messages, config)),
             temperature=config.temperature,
             max_tokens=config.max_tokens,
             stream=True,
@@ -341,7 +341,7 @@ class AnthropicProvider(ChatProvider):
 
         resp: Any = await self._client.messages.create(
             model=config.model,
-            messages=cast(Any, self._build_messages(messages)),
+            messages=cast("Any", self._build_messages(messages)),
             system=config.system_prompt or "",
             temperature=config.temperature,
             max_tokens=config.max_tokens,
@@ -395,7 +395,7 @@ class AnthropicProvider(ChatProvider):
 
         async with self._client.messages.stream(
             model=config.model,
-            messages=cast(Any, self._build_messages(messages)),
+            messages=cast("Any", self._build_messages(messages)),
             system=config.system_prompt or "",
             temperature=config.temperature,
             max_tokens=config.max_tokens,
