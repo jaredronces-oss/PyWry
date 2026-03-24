@@ -556,7 +556,11 @@ jobs:
         shell: bash
         run: |
           PYWRY_VERSION="${{ needs.merge-artifacts.outputs.version }}"
-          WHEEL_PATH="$(python -c \"import glob, os, sys; v=os.environ['PYWRY_VERSION']; d=os.path.join(os.environ['RUNNER_TEMP'], 'dist'); m=sorted(glob.glob(os.path.join(d, f'pywry-{v}-*.whl'))); print(m[0] if m else ''); sys.exit(0 if m else 1)\")"
+          WHEEL_PATH="$(ls "$RUNNER_TEMP"/dist/pywry-"$PYWRY_VERSION"-*.whl | head -n 1)"
+          if [ -z "$WHEEL_PATH" ]; then
+            echo "No pywry wheel found in $RUNNER_TEMP/dist for version $PYWRY_VERSION"
+            exit 1
+          fi
           pip uninstall -y pywry || true
           pip install --force-reinstall "$WHEEL_PATH"
           pip install --find-links "$RUNNER_TEMP/dist/" "pywry[all]==$PYWRY_VERSION"
