@@ -570,6 +570,11 @@ jobs:
           python -c "from pywry import PyWry; print('PyWry class imported')"
           python -c "from pywry.toolbar import Button, Toolbar; print('Toolbar components imported')"
 
+      - name: Remove source package to avoid shadowing installed wheel
+        shell: bash
+        run: |
+          rm -rf pywry/pywry
+
       - name: Run tests (Linux)
         if: runner.os == 'Linux'
         working-directory: pywry
