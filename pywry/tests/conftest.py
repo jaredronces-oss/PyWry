@@ -29,10 +29,12 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
-# Add pywry to path for imports
-pywry_path = Path(__file__).parent.parent / "pywry"
-if str(pywry_path) not in sys.path:
-    sys.path.insert(0, str(pywry_path.parent))
+# Add pywry source to path for local source-tree tests.
+# For wheel-validation runs, keep imports resolving to site-packages.
+if os.getenv("PYWRY_TEST_USE_INSTALLED_WHEEL", "0") != "1":
+    pywry_path = Path(__file__).parent.parent / "pywry"
+    if str(pywry_path) not in sys.path:
+        sys.path.insert(0, str(pywry_path.parent))
 
 
 # =============================================================================

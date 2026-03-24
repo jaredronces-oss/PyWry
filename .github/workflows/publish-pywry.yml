@@ -574,6 +574,7 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: ${{ github.workspace }}/pywry/tests
         env:
+          PYWRY_TEST_USE_INSTALLED_WHEEL: "1"
           PYWRY_HEADLESS: "1"
           NO_AT_BRIDGE: "1"
         run: |
@@ -583,6 +584,7 @@ jobs:
         if: runner.os == 'Windows' && runner.arch == 'X64'
         working-directory: ${{ github.workspace }}/pywry/tests
         env:
+          PYWRY_TEST_USE_INSTALLED_WHEEL: "1"
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
           PYTHONUTF8: "1"
@@ -593,6 +595,7 @@ jobs:
         if: runner.os == 'Windows' && runner.arch == 'ARM64'
         working-directory: ${{ github.workspace }}/pywry/tests
         env:
+          PYWRY_TEST_USE_INSTALLED_WHEEL: "1"
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
           PYTHONUTF8: "1"
@@ -603,6 +606,7 @@ jobs:
         if: runner.os == 'macOS' && runner.arch == 'ARM64'
         working-directory: ${{ github.workspace }}/pywry/tests
         env:
+          PYWRY_TEST_USE_INSTALLED_WHEEL: "1"
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
         run: |
@@ -612,6 +616,7 @@ jobs:
         if: runner.os == 'macOS' && runner.arch == 'X64'
         working-directory: ${{ github.workspace }}/pywry/tests
         env:
+          PYWRY_TEST_USE_INSTALLED_WHEEL: "1"
           PYWRY_HEADLESS: "1"
         run: |
           python -m pytest --rootdir . -c ../pytest.ini . -v --tb=short -x
