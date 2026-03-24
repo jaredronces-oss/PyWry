@@ -680,4 +680,5 @@ jobs:
         with:
           print-hash: true
           attestations: false
+          verbose: true
 
