@@ -556,13 +556,8 @@ jobs:
         shell: bash
         run: |
           PYWRY_VERSION="${{ needs.merge-artifacts.outputs.version }}"
-          WHEEL_PATH="$(ls "$RUNNER_TEMP"/dist/pywry-"$PYWRY_VERSION"-*.whl | head -n 1)"
-          if [ -z "$WHEEL_PATH" ]; then
-            echo "No pywry wheel found in $RUNNER_TEMP/dist for version $PYWRY_VERSION"
-            exit 1
-          fi
           pip uninstall -y pywry || true
-          pip install --force-reinstall "$WHEEL_PATH"
+          pip install --force-reinstall --no-deps --find-links "$RUNNER_TEMP/dist/" "pywry==$PYWRY_VERSION"
           pip install --find-links "$RUNNER_TEMP/dist/" "pywry[all]==$PYWRY_VERSION"
           pip install pytest pytest-asyncio pytest-timeout httpx plotly fakeredis testcontainers
 
