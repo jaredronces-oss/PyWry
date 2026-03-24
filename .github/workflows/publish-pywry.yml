@@ -572,6 +572,7 @@ jobs:
 
       - name: Run tests (Linux)
         if: runner.os == 'Linux'
+        working-directory: ${{ github.workspace }}
         env:
           PYWRY_HEADLESS: "1"
           NO_AT_BRIDGE: "1"
@@ -580,6 +581,7 @@ jobs:
 
       - name: Run tests (Windows x64)
         if: runner.os == 'Windows' && runner.arch == 'X64'
+        working-directory: ${{ github.workspace }}
         env:
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
@@ -589,6 +591,7 @@ jobs:
 
       - name: Run tests (Windows ARM)
         if: runner.os == 'Windows' && runner.arch == 'ARM64'
+        working-directory: ${{ github.workspace }}
         env:
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
@@ -598,6 +601,7 @@ jobs:
 
       - name: Run tests (macOS ARM)
         if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        working-directory: ${{ github.workspace }}
         env:
           PYWRY_HEADLESS: "1"
           PYWRY_DEPLOY__STATE_BACKEND: "memory"
@@ -606,6 +610,7 @@ jobs:
 
       - name: Run tests (macOS Intel)
         if: runner.os == 'macOS' && runner.arch == 'X64'
+        working-directory: ${{ github.workspace }}
         env:
           PYWRY_HEADLESS: "1"
         run: |
