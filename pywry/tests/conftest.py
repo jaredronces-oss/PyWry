@@ -35,6 +35,24 @@ if os.getenv("PYWRY_TEST_USE_INSTALLED_WHEEL", "0") != "1":
     pywry_path = Path(__file__).parent.parent / "pywry"
     if str(pywry_path) not in sys.path:
         sys.path.insert(0, str(pywry_path.parent))
+else:
+    # Remove checkout paths that can shadow the installed pywry wheel.
+    workspace = os.getenv("GITHUB_WORKSPACE")
+    blocked: set[str] = set()
+    if workspace:
+        blocked.add(str(Path(workspace).resolve()))
+        blocked.add(str((Path(workspace) / "pywry").resolve()))
+
+    if blocked:
+        filtered: list[str] = []
+        for entry in sys.path:
+            resolved = str(Path(entry).absolute()) if entry else str(Path.cwd().absolute())
+
+            if resolved in blocked:
+                continue
+            filtered.append(entry)
+
+        sys.path[:] = filtered
 
 
 # =============================================================================
