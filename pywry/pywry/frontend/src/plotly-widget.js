@@ -584,10 +584,12 @@ function render({ model, el }) {
             const templateName = isDark ? 'plotly_dark' : 'plotly_white';
             if (window.__pywryMergeThemeTemplate) {
                 const mergedTemplate = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                 window.Plotly.relayout(plotDiv, { template: mergedTemplate });
             } else {
                 const template = window.PYWRY_PLOTLY_TEMPLATES?.[templateName];
                 if (template) {
+                    if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                     window.Plotly.relayout(plotDiv, { template: template });
                 }
             }

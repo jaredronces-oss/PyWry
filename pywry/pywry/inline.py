@@ -3411,6 +3411,7 @@ def generate_plotly_html(
                         const templateName = prefersDark ? 'plotly_dark' : 'plotly_white';
                         if (window.__pywryMergeThemeTemplate) {{
                             const merged = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                            if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                             window.Plotly.relayout(plotDiv, {{ template: merged }});
                         }}
                     }}
@@ -3471,6 +3472,7 @@ def generate_plotly_html(
                 const templateName = isLight ? 'plotly_white' : 'plotly_dark';
                 if (window.__pywryMergeThemeTemplate) {{
                     const merged = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                    if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                     window.Plotly.relayout(plotDiv, {{ template: merged }});
                 }}
             }}

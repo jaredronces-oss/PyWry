@@ -513,6 +513,7 @@ THEME_MANAGER_JS = """
             var templateName = isDark ? 'plotly_dark' : 'plotly_white';
             if (window.__pywryMergeThemeTemplate) {
                 var merged = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                 window.Plotly.relayout(plotDiv, { template: merged });
             }
         }

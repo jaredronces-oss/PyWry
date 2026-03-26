@@ -458,9 +458,7 @@ class TestThemeSwitchViaEventE2E:
         # Verify the stored templates survived the re-render.
         after = _read_chart_template_state(label)
         assert after is not None, "No response after toggle!"
-        assert after["storedDark"], (
-            "template_dark lost after real event toggle + Plotly.relayout!"
-        )
+        assert after["storedDark"], "template_dark lost after real event toggle + Plotly.relayout!"
         assert after["storedLight"], (
             "template_light lost after real event toggle + Plotly.relayout!"
         )

@@ -246,6 +246,30 @@ _JS_FUNCTIONS = textwrap.dedent("""\
         if (!overrides) return JSON.parse(JSON.stringify(baseTemplate));
         return deepMerge(baseTemplate, overrides);
     }
+
+    // --- Paste of __pywryStripThemeColors ---
+    function stripThemeColors(plotDiv) {
+        var layout = plotDiv.layout;
+        if (!layout) return;
+        delete layout.paper_bgcolor;
+        delete layout.plot_bgcolor;
+        delete layout.colorway;
+        if (layout.font) {
+            delete layout.font.color;
+            if (Object.keys(layout.font).length === 0) delete layout.font;
+        }
+        var axisRe = /^[xyz]axis\\d*$/;
+        var keys = Object.keys(layout);
+        for (var i = 0; i < keys.length; i++) {
+            if (axisRe.test(keys[i]) && layout[keys[i]] && typeof layout[keys[i]] === 'object') {
+                var ax = layout[keys[i]];
+                delete ax.color;
+                delete ax.gridcolor;
+                delete ax.linecolor;
+                delete ax.zerolinecolor;
+            }
+        }
+    }
 """)
 
 
@@ -641,3 +665,93 @@ class TestEndToEndTemplatePipeline:
         # Should still have the extraction code (it'll produce null)
         assert "var userTemplateDark = config.templateDark || null" in script
         assert "__pywryMergeThemeTemplate" in script
+
+
+# =============================================================================
+# __pywryStripThemeColors — JS runtime tests
+# =============================================================================
+
+
+@_requires_node
+class TestStripThemeColorsJS:
+    """Test that __pywryStripThemeColors removes theme-sensitive explicit colours."""
+
+    def test_strips_paper_and_plot_bgcolor(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {paper_bgcolor: '#fff', plot_bgcolor: '#eee', title: 'Keep Me'}};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert "paper_bgcolor" not in result
+        assert "plot_bgcolor" not in result
+        assert result["title"] == "Keep Me"
+
+    def test_strips_font_color_but_keeps_font_size(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {font: {color: '#000', size: 14, family: 'Arial'}}};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert "color" not in result["font"]
+        assert result["font"]["size"] == 14
+        assert result["font"]["family"] == "Arial"
+
+    def test_removes_empty_font_object(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {font: {color: '#000'}, title: 'X'}};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert "font" not in result
+        assert result["title"] == "X"
+
+    def test_strips_colorway(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {colorway: ['red', 'blue'], title: 'Chart'}};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert "colorway" not in result
+
+    def test_strips_axis_color_properties(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {
+                xaxis: {color: '#000', gridcolor: '#ccc', linecolor: '#aaa', zerolinecolor: '#ddd', title: 'X'},
+                yaxis: {color: '#000', gridcolor: '#ccc'},
+                xaxis2: {color: '#111', range: [0, 10]}
+            }};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert "color" not in result["xaxis"]
+        assert "gridcolor" not in result["xaxis"]
+        assert "linecolor" not in result["xaxis"]
+        assert "zerolinecolor" not in result["xaxis"]
+        assert result["xaxis"]["title"] == "X"  # preserved
+        assert "color" not in result["yaxis"]
+        assert "color" not in result["xaxis2"]
+        assert result["xaxis2"]["range"] == [0, 10]  # preserved
+
+    def test_preserves_non_theme_layout_properties(self) -> None:
+        result = _run_js_json("""
+            var div = {layout: {
+                paper_bgcolor: '#fff', title: 'My Chart',
+                margin: {t: 40, r: 20}, autosize: true,
+                annotations: [{text: 'hi'}]
+            }};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div.layout));
+        """)
+        assert result["title"] == "My Chart"
+        assert result["margin"] == {"t": 40, "r": 20}
+        assert result["autosize"] is True
+        assert result["annotations"] == [{"text": "hi"}]
+
+    def test_no_layout_is_noop(self) -> None:
+        """Missing layout doesn't crash."""
+        result = _run_js_json("""
+            var div = {};
+            stripThemeColors(div);
+            console.log(JSON.stringify(div));
+        """)
+        assert result == {}

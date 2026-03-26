@@ -84,6 +84,48 @@ window.__pywryMergeThemeTemplate = function(plotDiv, themeTemplateName, userTemp
 };
 
 /**
+ * Remove theme-sensitive colour properties from the explicit (input) layout
+ * so that a subsequent Plotly.relayout({template:…}) can actually take
+ * effect.  In Plotly.js, explicit layout values ALWAYS beat template
+ * defaults, so colours set during the initial Plotly.newPlot (or injected
+ * by Plotly Express) will survive a template swap unless we delete them
+ * from gd.layout first.
+ *
+ * We only touch the known theme-sensitive keys — everything else
+ * (margin, title text, annotations, traces …) is left untouched.
+ *
+ * @param {HTMLElement} plotDiv - The Plotly graph div.
+ */
+window.__pywryStripThemeColors = function(plotDiv) {
+    var layout = plotDiv.layout;
+    if (!layout) return;
+
+    // Top-level colour properties provided by every Plotly theme template
+    delete layout.paper_bgcolor;
+    delete layout.plot_bgcolor;
+    delete layout.colorway;
+
+    // Font colour
+    if (layout.font) {
+        delete layout.font.color;
+        if (Object.keys(layout.font).length === 0) delete layout.font;
+    }
+
+    // Axis colour properties (xaxis, yaxis, xaxis2, yaxis2, …)
+    var axisRe = /^[xyz]axis\d*$/;
+    var keys = Object.keys(layout);
+    for (var i = 0; i < keys.length; i++) {
+        if (axisRe.test(keys[i]) && layout[keys[i]] && typeof layout[keys[i]] === 'object') {
+            var ax = layout[keys[i]];
+            delete ax.color;
+            delete ax.gridcolor;
+            delete ax.linecolor;
+            delete ax.zerolinecolor;
+        }
+    }
+};
+
+/**
  * Register a Plotly chart instance with PyWry.
  * @param {string} chartId - The unique ID for this chart.
  * @param {object} plotDiv - The DOM element containing the Plotly chart.
@@ -405,6 +447,7 @@ window.registerPyWryChart = registerPyWryChart;
                 if (plotDiv && window.Plotly && plotDiv.data && window.PYWRY_PLOTLY_TEMPLATES) {
                     var templateName = isDark ? 'plotly_dark' : 'plotly_white';
                     var mergedTemplate = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                    if (window.__pywryStripThemeColors) window.__pywryStripThemeColors(plotDiv);
                     window.Plotly.relayout(plotDiv, { template: mergedTemplate });
                 }
             }
