@@ -581,10 +581,16 @@ function render({ model, el }) {
         const plotDiv = container.querySelector('.js-plotly-plot');
         if (plotDiv && window.Plotly && plotDiv.data) {
             const templateName = isDark ? 'plotly_dark' : 'plotly_white';
-            const template = window.PYWRY_PLOTLY_TEMPLATES?.[templateName];
-            if (template) {
-                const newLayout = Object.assign({}, plotDiv.layout || {}, { template: template });
+            if (window.__pywryMergeThemeTemplate) {
+                const mergedTemplate = window.__pywryMergeThemeTemplate(plotDiv, templateName);
+                const newLayout = Object.assign({}, plotDiv.layout || {}, { template: mergedTemplate });
                 window.Plotly.newPlot(plotDiv, plotDiv.data, newLayout, plotDiv._fullLayout?._config || {});
+            } else {
+                const template = window.PYWRY_PLOTLY_TEMPLATES?.[templateName];
+                if (template) {
+                    const newLayout = Object.assign({}, plotDiv.layout || {}, { template: template });
+                    window.Plotly.newPlot(plotDiv, plotDiv.data, newLayout, plotDiv._fullLayout?._config || {});
+                }
             }
         }
     }
@@ -712,12 +718,39 @@ function render({ model, el }) {
                 const figData = JSON.parse(figureJson);
                 const config = figData.config || {};
 
+                // Extract per-theme user template overrides (PyWry extension)
+                const userTemplateDark = config.templateDark || null;
+                const userTemplateLight = config.templateLight || null;
+                delete config.templateDark;
+                delete config.templateLight;
+
+                // Extract single/legacy template from layout
+                let userTemplate = null;
+                const templates = window.PYWRY_PLOTLY_TEMPLATES || {};
+                const isDark = model.get('theme') === 'dark';
+                const themeTemplateName = isDark ? 'plotly_dark' : 'plotly_white';
+                if (figData.layout && typeof figData.layout.template === 'string' && templates[figData.layout.template]) {
+                    if (figData.layout.template !== themeTemplateName) {
+                        userTemplate = templates[figData.layout.template];
+                    }
+                    figData.layout.template = null;
+                } else if (figData.layout && figData.layout.template && typeof figData.layout.template === 'object') {
+                    userTemplate = figData.layout.template;
+                    figData.layout.template = null;
+                }
+
                 // Process modebar buttons using shared helper
                 processPlotlyConfig(config);
 
                 const finalConfig = Object.assign({responsive: true, displaylogo: false}, config);
 
                 window.Plotly.newPlot(chartEl, figData.data, figData.layout, finalConfig).then(function() {
+                    // Apply merged theme template (user always wins)
+                    if (window.__pywryMergeThemeTemplate) {
+                        const merged = window.__pywryMergeThemeTemplate(chartEl, themeTemplateName, userTemplate, userTemplateDark, userTemplateLight);
+                        window.Plotly.relayout(chartEl, { template: merged });
+                    }
+                    chartEl.__pywry_theme_template__ = themeTemplateName;
                     setupPlotlyEvents(chartEl);
                 }).catch(function(err) {
                     console.error('[PyWry Plotly] Plotly.newPlot failed:', err);
