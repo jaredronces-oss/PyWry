@@ -481,6 +481,13 @@ class GridOptions(AGGridModel):
     row_selection: dict[str, Any] | bool | None = Field(default=None, alias="rowSelection")
     cell_selection: bool | None = Field(default=True, alias="cellSelection")
 
+    @field_validator("row_selection", mode="before")
+    @classmethod
+    def _coerce_row_selection(cls, v: Any) -> dict[str, Any] | bool | None:
+        if isinstance(v, RowSelection):
+            return v.to_dict()
+        return v
+
     # === Layout ===
     dom_layout: DomLayoutType = Field(default="normal", alias="domLayout")
 

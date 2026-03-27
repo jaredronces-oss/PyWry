@@ -944,6 +944,10 @@ class PyWry(GridStateMixin, PlotlyStateMixin, ToolbarStateMixin):  # pylint: dis
         on_cell_click: Any = None,
         on_row_selected: Any = None,
         server_side: bool = False,
+        row_selection: Any = False,
+        pagination: bool | None = None,
+        pagination_page_size: int = 100,
+        enable_cell_span: bool | None = None,
     ) -> NativeWindowHandle | BaseWidget:
         """Show a DataFrame in an AG Grid table.
 
@@ -1014,7 +1018,13 @@ class PyWry(GridStateMixin, PlotlyStateMixin, ToolbarStateMixin):  # pylint: dis
                 toolbars=toolbars,
                 modals=modals,
                 callbacks=inline_callbacks,
-                open_browser=is_browser_mode,  # Open in browser for BROWSER mode
+                open_browser=is_browser_mode,
+                column_defs=column_defs,
+                grid_options=grid_options,
+                row_selection=row_selection,
+                pagination=pagination,
+                pagination_page_size=pagination_page_size,
+                enable_cell_span=enable_cell_span,
             )
             self._register_inline_widget(widget)
             return widget
