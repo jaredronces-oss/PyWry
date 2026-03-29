@@ -125,13 +125,12 @@ pyinstaller --windowed --name MyApp my_app.py
 ```
 
 The output in `dist/MyApp/` is fully self-contained. Target machines need no Python installation — only the OS webview (WebView2 on Windows 10 1803+, WKWebView on macOS, libwebkit2gtk on Linux).
-
-## Documentation
+ Documentation
 
 **[deeleeramone.github.io/PyWry](https://deeleeramone.github.io/PyWry/)**
 
-- [Getting Started](https://deeleeramone.github.io/PyWry/getting-started/) — installation, quick start, rendering paths
-- [Concepts](https://deeleeramone.github.io/PyWry/getting-started/) — events, configuration, state, hot reload, RBAC
+- [Geng Started](https://deeleeramone.github.io/PyWry/getting-started/) — installation, quick start, rendering paths
+- [Concepts](https://deeleeramone.github.io/PyWry/getting-started/) — evens, configuration, state, hot reload, RBAC
 - [Components](https://deeleeramone.github.io/PyWry/components/) — live previews for all toolbar components
 - [API Reference](https://deeleeramone.github.io/PyWry/reference/) — auto-generated docs for every class and function
 - [MCP Server](https://deeleeramone.github.io/PyWry/mcp/) — AI agent integration
